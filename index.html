@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Veluwe Field Test · A Hoge Veluwe couple's trail</title>
+<meta name="description" content="An interactive two-player trivia trail through De Hoge Veluwe National Park — deer, white bikes, Van Gogh, and the legend of the silver cross." />
+<style>
+  /* ---------- Reset ---------- */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  img, svg { display: block; max-width: 100%; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  a { color: inherit; }
+
+  /* ---------- Tokens ---------- */
+  :root {
+    --heather: #7C5A9B;      /* blooming heath — the one bold accent */
+    --heather-soft: #9B7CB8;
+    --bracken: #C0863A;      /* deer / autumn secondary */
+    --forest: #2E4633;
+    --ground: #E7E8E2;       /* cool morning-mist neutral (green-biased) */
+    --paper: #F3F3EE;
+    --card: #FDFDFB;
+    --ink: #22271F;
+    --ink-soft: #56604F;
+    --line: #D3D6CC;
+    --good: #4F7A46;
+    --bad: #B4503E;
+    --shadow: 24px 30px 60px -30px rgba(34,39,31,.45);
+
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --heather: #B79AD3;
+      --heather-soft: #8E6FAE;
+      --bracken: #D6A15C;
+      --forest: #7CA585;
+      --ground: #161A15;
+      --paper: #1C211B;
+      --card: #232A21;
+      --ink: #ECEDE5;
+      --ink-soft: #9AA593;
+      --line: #333B30;
+      --good: #86C07A;
+      --bad: #E08872;
+      --shadow: 24px 30px 60px -28px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="light"] {
+    --heather: #7C5A9B; --heather-soft: #9B7CB8; --bracken: #C0863A; --forest: #2E4633;
+    --ground: #E7E8E2; --paper: #F3F3EE; --card: #FDFDFB; --ink: #22271F; --ink-soft: #56604F;
+    --line: #D3D6CC; --good: #4F7A46; --bad: #B4503E; --shadow: 24px 30px 60px -30px rgba(34,39,31,.45);
+  }
+  :root[data-theme="dark"] {
+    --heather: #B79AD3; --heather-soft: #8E6FAE; --bracken: #D6A15C; --forest: #7CA585;
+    --ground: #161A15; --paper: #1C211B; --card: #232A21; --ink: #ECEDE5; --ink-soft: #9AA593;
+    --line: #333B30; --good: #86C07A; --bad: #E08872; --shadow: 24px 30px 60px -28px rgba(0,0,0,.7);
+  }
+
+  /* ---------- Base ---------- */
+  body {
+    font-family: var(--sans);
+    background: var(--ground);
+    color: var(--ink);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--heather) 12%, transparent) 0%, transparent 55%),
+      radial-gradient(90% 70% at 0% 100%, color-mix(in srgb, var(--forest) 14%, transparent) 0%, transparent 50%);
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: clamp(20px, 4vw, 48px); }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 600; text-wrap: balance; line-height: 1.1; letter-spacing: -.01em; }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    max-width: 940px; margin: 0 auto;
+    padding: 18px clamp(20px, 4vw, 48px) 0;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand .mark { width: 30px; height: 30px; color: var(--heather); flex: none; }
+  .brand .name { font-family: var(--mono); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-soft); }
+  .theme-btn {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+    width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+    transition: border-color .2s, color .2s, transform .2s;
+  }
+  .theme-btn:hover { color: var(--heather); border-color: var(--heather); transform: rotate(-15deg); }
+  .theme-btn svg { width: 18px; height: 18px; }
+
+  /* ---------- Card shell ---------- */
+  .screen { animation: rise .5s cubic-bezier(.2,.7,.2,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- Hero / intro ---------- */
+  .hero { text-align: center; padding: clamp(12px, 3vw, 30px) 0 8px; }
+  .emblem { width: clamp(120px, 26vw, 168px); height: auto; margin: 0 auto clamp(14px, 3vw, 24px); color: var(--heather); }
+  .hero h1 { font-size: clamp(38px, 8.5vw, 76px); letter-spacing: -.02em; }
+  .hero .sub { font-size: clamp(16px, 2.4vw, 20px); color: var(--ink-soft); max-width: 34ch; margin: 14px auto 0; }
+  .coords { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; color: var(--ink-soft); margin-top: 18px; }
+  .coords span { color: var(--heather); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+    box-shadow: var(--shadow); padding: clamp(22px, 4vw, 40px);
+  }
+  .mt { margin-top: clamp(20px, 4vw, 34px); }
+
+  /* ---------- Player setup ---------- */
+  .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 22px; }
+  @media (max-width: 560px) { .setup-grid { grid-template-columns: 1fr; } }
+  .player-field label {
+    display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ink-soft); margin-bottom: 8px;
+  }
+  .player-field .tag { color: var(--heather); }
+  .player-field input {
+    width: 100%; padding: 13px 16px; font-size: 17px; font-family: var(--serif);
+    background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; color: var(--ink);
+    transition: border-color .2s;
+  }
+  .player-field input:focus { outline: none; border-color: var(--heather); }
+  .player-field:nth-child(2) input:focus { border-color: var(--bracken); }
+  .player-field:nth-child(2) .tag { color: var(--bracken); }
+
+  .mode-note { font-size: 14px; color: var(--ink-soft); margin-top: 20px; text-align: center; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; justify-content: center;
+    background: var(--heather); color: #fff; border: none;
+    padding: 15px 30px; border-radius: 100px; font-weight: 600; font-size: 16px;
+    letter-spacing: .01em; transition: transform .15s, box-shadow .2s, background .2s;
+    box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--heather) 80%, transparent);
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -12px color-mix(in srgb, var(--heather) 85%, transparent); }
+  .btn:active { transform: translateY(0); }
+  .btn:focus-visible { outline: 3px solid var(--bracken); outline-offset: 3px; }
+  .btn.ghost { background: transparent; color: var(--heather); border: 1.5px solid var(--line); box-shadow: none; }
+  .btn.ghost:hover { border-color: var(--heather); }
+  .btn.block { display: flex; width: 100%; }
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 26px; }
+  :root[data-theme="dark"] .btn, @media (prefers-color-scheme: dark) { }
+
+  /* ---------- Trail / progress ---------- */
+  .trailhead { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+  .turn-chip {
+    display: inline-flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 12px;
+    letter-spacing: .1em; text-transform: uppercase; padding: 7px 14px; border-radius: 100px;
+    border: 1.5px solid; background: var(--card);
+  }
+  .turn-chip .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .turn-chip.p1 { border-color: color-mix(in srgb, var(--heather) 45%, var(--line)); color: var(--heather); }
+  .turn-chip.p1 .dot { background: var(--heather); }
+  .turn-chip.p2 { border-color: color-mix(in srgb, var(--bracken) 50%, var(--line)); color: var(--bracken); }
+  .turn-chip.p2 .dot { background: var(--bracken); }
+
+  .trail { display: flex; align-items: center; gap: 6px; }
+  .trail .step {
+    flex: 1; height: 5px; border-radius: 4px; background: var(--line); transition: background .3s;
+  }
+  .trail .step.done { background: var(--heather); }
+  .trail .step.now { background: var(--bracken); }
+
+  .marker-label { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
+
+  /* ---------- Question ---------- */
+  .qcard { margin-top: 8px; }
+  .q-index { font-family: var(--mono); font-size: 13px; color: var(--bracken); letter-spacing: .06em; }
+  .q-text { font-size: clamp(22px, 3.6vw, 30px); margin: 12px 0 4px; }
+  .options { display: grid; gap: 12px; margin-top: 22px; }
+  .opt {
+    text-align: left; width: 100%; background: var(--paper); border: 1.5px solid var(--line);
+    border-radius: 14px; padding: 15px 18px; font-size: 16.5px; color: var(--ink);
+    display: flex; align-items: center; gap: 14px; transition: border-color .18s, background .18s, transform .1s;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--heather); transform: translateX(3px); }
+  .opt:disabled { cursor: default; }
+  .opt .key {
+    flex: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
+    font-family: var(--mono); font-size: 13px; font-weight: 600; background: var(--card);
+    border: 1.5px solid var(--line); color: var(--ink-soft);
+  }
+  .opt.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, var(--card)); }
+  .opt.correct .key { background: var(--good); color: #fff; border-color: var(--good); }
+  .opt.wrong { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, var(--card)); }
+  .opt.wrong .key { background: var(--bad); color: #fff; border-color: var(--bad); }
+  .opt.dim { opacity: .5; }
+
+  /* ---------- Field note (reveal) ---------- */
+  .fieldnote {
+    margin-top: 20px; border-left: 3px solid var(--heather); background: var(--paper);
+    border-radius: 0 14px 14px 0; padding: 18px 20px; animation: rise .4s both;
+  }
+  .fieldnote .fn-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .fieldnote .verdict { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+  .fieldnote .verdict.ok { color: var(--good); }
+  .fieldnote .verdict.no { color: var(--bad); }
+  .fieldnote p { font-size: 15.5px; color: var(--ink); }
+  .fieldnote .fn-label { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--bracken); margin-bottom: 6px; }
+  .fieldnote a.more {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 14px;
+    font-weight: 600; color: var(--heather); text-decoration: none; border-bottom: 1.5px solid color-mix(in srgb, var(--heather) 40%, transparent);
+    padding-bottom: 1px;
+  }
+  .fieldnote a.more:hover { border-color: var(--heather); }
+  .next-wrap { margin-top: 20px; display: flex; justify-content: flex-end; }
+
+  /* ---------- Results ---------- */
+  .score-strip { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; margin: 8px 0 22px; }
+  .score-card { border: 1.5px solid var(--line); border-radius: 16px; padding: 20px; text-align: center; background: var(--paper); }
+  .score-card.p1 { border-color: color-mix(in srgb, var(--heather) 40%, var(--line)); }
+  .score-card.p2 { border-color: color-mix(in srgb, var(--bracken) 45%, var(--line)); }
+  .score-card.win { box-shadow: 0 0 0 2px var(--heather) inset; }
+  .score-card.p2.win { box-shadow: 0 0 0 2px var(--bracken) inset; }
+  .score-card .who { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+  .score-card .num { font-family: var(--serif); font-size: 52px; line-height: 1; margin: 8px 0 2px; font-variant-numeric: tabular-nums; }
+  .score-card.p1 .num { color: var(--heather); }
+  .score-card.p2 .num { color: var(--bracken); }
+  .score-card .of { font-size: 13px; color: var(--ink-soft); }
+  .vs { display: grid; place-items: center; font-family: var(--serif); font-style: italic; color: var(--ink-soft); font-size: 18px; }
+  .rank-badge { text-align: center; }
+  .rank-badge .rank { font-size: clamp(28px, 5vw, 40px); color: var(--heather); }
+  .rank-badge .verdict-line { font-size: 17px; color: var(--ink-soft); margin-top: 8px; max-width: 40ch; margin-inline: auto; }
+  @media (max-width: 520px) { .score-strip { grid-template-columns: 1fr; } .vs { padding: 4px; } }
+
+  /* ---------- Facts appendix ---------- */
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+  @media (max-width: 640px) { .facts { grid-template-columns: 1fr; } }
+  .fact {
+    border: 1px solid var(--line); border-radius: 14px; padding: 18px; background: var(--card);
+  }
+  .fact .n { font-family: var(--mono); font-size: 22px; color: var(--bracken); font-variant-numeric: tabular-nums; }
+  .fact h3 { font-size: 18px; margin: 6px 0 4px; }
+  .fact p { font-size: 14.5px; color: var(--ink-soft); }
+  .fact a { color: var(--heather); font-weight: 600; text-decoration: none; font-size: 13.5px; border-bottom: 1px solid color-mix(in srgb, var(--heather) 35%, transparent); }
+
+  /* ---------- Today's plan ---------- */
+  .tips { margin-top: 16px; display: grid; gap: 12px; }
+  .tip { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .tip .ico { flex: none; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: color-mix(in srgb, var(--heather) 12%, transparent); color: var(--heather); }
+  .tip .ico svg { width: 19px; height: 19px; }
+  .tip b { font-family: var(--serif); font-weight: 600; }
+  .tip p { font-size: 14.5px; color: var(--ink-soft); margin-top: 2px; }
+
+  .lead { color: var(--ink-soft); font-size: 15px; margin-top: 4px; max-width: 62ch; }
+
+  /* ---------- Journey / route ---------- */
+  .route { display: flex; flex-direction: column; margin-top: 6px; }
+  .r-item { display: grid; grid-template-columns: 32px 1fr; column-gap: 16px; padding-bottom: 26px; }
+  .r-item:last-child { padding-bottom: 0; }
+  .r-item .mk { position: relative; display: flex; justify-content: center; }
+  .r-item .mk::before { content: ""; position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 2px; background: color-mix(in srgb, var(--heather) 35%, var(--line)); }
+  .r-item:first-child .mk::before { top: 13px; }
+  .r-item:last-child .mk::before { bottom: calc(100% - 13px); }
+  .r-item .dot { position: relative; z-index: 1; width: 15px; height: 15px; border-radius: 50%; margin-top: 6px; background: var(--card); border: 3px solid var(--heather); flex: none; }
+  .r-item.end .dot { background: var(--heather); box-shadow: 0 0 0 4px color-mix(in srgb, var(--heather) 18%, transparent); }
+  .r-item .badge { position: relative; z-index: 1; width: 26px; height: 26px; border-radius: 50%; margin-top: 2px; display: grid; place-items: center; background: color-mix(in srgb, var(--bracken) 14%, var(--card)); color: var(--bracken); flex: none; }
+  .r-item .badge svg { width: 15px; height: 15px; }
+  .r-item .place { font-family: var(--serif); font-size: 19px; line-height: 1.2; }
+  .r-item .mode { display: inline-flex; align-items: baseline; gap: 8px; font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--bracken); }
+  .r-item .mode .dur { color: var(--ink-soft); letter-spacing: .04em; }
+  .r-item .detail { font-size: 14px; color: var(--ink-soft); margin-top: 5px; max-width: 56ch; }
+  .r-item .detail b { color: var(--ink); font-weight: 600; }
+
+  .verdict-box { margin-top: 22px; border: 1.5px solid color-mix(in srgb, var(--bracken) 42%, var(--line)); background: color-mix(in srgb, var(--bracken) 8%, var(--card)); border-radius: 14px; padding: 18px 20px; }
+  .verdict-box .vb-tag { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--bracken); }
+  .verdict-box h3 { font-family: var(--serif); font-size: 20px; margin: 7px 0 8px; }
+  .verdict-box p { font-size: 14.5px; color: var(--ink); }
+
+  /* ---------- Packing checklist ---------- */
+  .pack { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  @media (max-width: 560px) { .pack { grid-template-columns: 1fr; } }
+  .pack .item { display: flex; gap: 12px; align-items: center; padding: 12px 15px; border: 1px solid var(--line); border-radius: 11px; background: var(--card); cursor: pointer; user-select: none; transition: border-color .15s, background .15s; }
+  .pack .item:hover { border-color: var(--heather); }
+  .pack .box { width: 21px; height: 21px; border-radius: 6px; border: 2px solid var(--line); flex: none; display: grid; place-items: center; color: #fff; transition: background .15s, border-color .15s; }
+  .pack .box svg { width: 13px; height: 13px; opacity: 0; transition: opacity .12s; }
+  .pack .item.checked { background: color-mix(in srgb, var(--heather) 9%, var(--card)); border-color: color-mix(in srgb, var(--heather) 40%, var(--line)); }
+  .pack .item.checked .box { background: var(--heather); border-color: var(--heather); }
+  .pack .item.checked .box svg { opacity: 1; }
+  .pack .item.checked .lbl { text-decoration: line-through; color: var(--ink-soft); }
+  .pack .lbl { font-size: 14.5px; }
+
+  .section-head { display: flex; align-items: baseline; gap: 14px; margin: 40px 0 4px; }
+  .section-head h2 { font-size: clamp(24px, 4vw, 32px); }
+  .rule { height: 1px; background: var(--line); flex: 1; }
+
+  footer { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 40px 0 10px; }
+  footer a { color: var(--heather); text-decoration: none; }
+  .disclaimer { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; margin-top: 8px; }
+
+  .hidden { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <path d="M24 44V22" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M24 26c-3-3-4-7-10-8-5-1-7-5-6-9 3 3 6 2 9 4 4 2.5 6 6 7 10Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M24 26c3-3 4-7 10-8 5-1 7-5 6-9-3 3-6 2-9 4-4 2.5-6 6-7 10Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M24 15v-5M21.5 12.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <span class="name">The Veluwe Field Test</span>
+  </div>
+  <button class="theme-btn" id="themeBtn" aria-label="Toggle light and dark theme" title="Toggle theme">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+  </button>
+</div>
+
+<main class="wrap">
+
+  <!-- ===================== INTRO ===================== -->
+  <section id="screen-intro" class="screen">
+    <div class="hero">
+      <svg class="emblem" viewBox="0 0 200 150" fill="none" aria-hidden="true">
+        <!-- antlers -->
+        <path d="M100 140V70" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <path d="M100 84C86 70 84 52 60 46c-20-5-30-22-24-38 12 14 26 8 38 20 16 16 22 34 26 56Z" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+        <path d="M100 84c14-14 16-32 40-38 20-5 30-22 24-38-12 14-26 8-38 20-16 16-22 34-26 56Z" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+        <!-- glowing cross of St Hubertus -->
+        <g opacity="0.95">
+          <circle cx="100" cy="40" r="20" fill="currentColor" opacity="0.12"/>
+          <path d="M100 24v34M85 38h30" stroke="var(--bracken)" stroke-width="4.5" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <p class="eyebrow">De Hoge Veluwe · Gelderland · The Netherlands</p>
+      <h1>The Veluwe<br>Field Test</h1>
+      <p class="sub">A two-player trail through the heath, the deer, the white bikes and Van Gogh. One of you knows the park better. Today you find out which.</p>
+      <p class="coords">52.0575° N · 5.8560° E &nbsp;·&nbsp; <span>25 July 2026</span></p>
+    </div>
+
+    <div class="card mt">
+      <p class="eyebrow">Choose your explorers</p>
+      <h2 style="font-size:clamp(22px,3.4vw,28px);margin-top:6px;">Two names, one trail</h2>
+      <div class="setup-grid">
+        <div class="player-field">
+          <label>Explorer <span class="tag">One ●</span></label>
+          <input id="p1name" type="text" maxlength="18" placeholder="e.g. you" autocomplete="off" />
+        </div>
+        <div class="player-field">
+          <label>Explorer <span class="tag">Two ●</span></label>
+          <input id="p2name" type="text" maxlength="18" placeholder="e.g. your partner" autocomplete="off" />
+        </div>
+      </div>
+      <p class="mode-note">You'll take turns — the trail alternates between you. No conferring. 12 markers, 6 questions each.</p>
+      <div class="btn-row">
+        <button class="btn" id="startBtn">Set off on the trail →</button>
+      </div>
+    </div>
+
+    <!-- Getting there -->
+    <div class="section-head"><h2>Getting there from Amsterdam</h2><span class="rule"></span></div>
+    <p class="lead">No car needed — it's a train and a bus, about two hours door-to-gate. Tap a contactless bank card (OVpay) or an OV-chipkaart to ride both; no paper tickets required.</p>
+
+    <div class="card" style="margin-top:16px;">
+      <p class="eyebrow">The route · roughly 2 hours</p>
+      <div class="route">
+        <div class="r-item">
+          <div class="mk"><span class="dot"></span></div>
+          <div>
+            <div class="place">Amsterdam Centraal</div>
+            <p class="detail">Trains east leave several times an hour — grab a coffee for the platform and pick the next Intercity.</p>
+          </div>
+        </div>
+        <div class="r-item">
+          <div class="mk"><span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="12" rx="2.5"/><path d="M6 10h12M9 16l-2 3M15 16l2 3"/><circle cx="9" cy="13" r=".4" fill="currentColor"/><circle cx="15" cy="13" r=".4" fill="currentColor"/></svg></span></div>
+          <div>
+            <div class="mode">Train · Intercity <span class="dur">≈ 1 h 05</span></div>
+            <p class="detail">Direct to <b>Ede-Wageningen</b>. Watch the flat Randstad give way to forest and heather as you roll onto the Veluwe. <b>Apeldoorn</b> and <b>Arnhem Centraal</b> also work as gateway stations if the timing suits you better.</p>
+          </div>
+        </div>
+        <div class="r-item">
+          <div class="mk"><span class="dot"></span></div>
+          <div>
+            <div class="place">Ede-Wageningen</div>
+            <p class="detail">Your transfer point. Follow the signs to the bus bays right outside the station entrance.</p>
+          </div>
+        </div>
+        <div class="r-item">
+          <div class="mk"><span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="13" rx="2.5"/><path d="M5 11h14M8 17v2M16 17v2"/><circle cx="8.5" cy="14" r=".5" fill="currentColor"/><circle cx="15.5" cy="14" r=".5" fill="currentColor"/></svg></span></div>
+          <div>
+            <div class="mode">Bus · line 106 / 108 <span class="dur">≈ 35 min</span></div>
+            <p class="detail">In summer a direct <b>bus 106</b> often runs from the station straight to the park and museum on weekends — and today's a Saturday, so you may be in luck. Otherwise take <b>bus 108</b> to <b>Otterlo, Rotonde</b> and change to bus 106. Always worth a glance at the 9292 travel planner first.</p>
+          </div>
+        </div>
+        <div class="r-item end">
+          <div class="mk"><span class="dot"></span></div>
+          <div>
+            <div class="place">De Hoge Veluwe · Otterlo entrance</div>
+            <p class="detail">You've arrived. Buy your <b>park tickets online in advance</b> — the bus fare doesn't include entry — then grab a free White Bike and go.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="verdict-box">
+        <div class="vb-tag">Your 11:00 train — the verdict</div>
+        <h3>Fine for a relaxed Saturday — just a touch late.</h3>
+        <p>An 11:00 from Amsterdam Centraal puts you at the gate around 13:00. That's ample for the Kröller-Müller Museum (open till 17:00), a White-Bike loop, and the golden late-afternoon light when the deer come out. The catch: you'll miss the calm dawn wildlife window, and the museum closes at 17:00. If spotting animals is the whole point, an earlier train (≈ 09:00) is the smarter call. Either way, check the <b>last bus back from Otterlo</b> before you settle in — evening services thin out fast.</p>
+      </div>
+    </div>
+
+    <!-- What to pack -->
+    <div class="section-head"><h2>What to pack</h2><span class="rule"></span></div>
+    <p class="lead">A day-bag for two. Tap each item as it goes in.</p>
+    <div class="pack" id="pack"></div>
+
+    <!-- Today's plan -->
+    <div class="section-head"><h2>While you're actually there today</h2><span class="rule"></span></div>
+    <div class="tips" id="tips"></div>
+
+    <!-- Facts appendix -->
+    <div class="section-head"><h2>Field notes &amp; fun facts</h2><span class="rule"></span></div>
+    <p style="color:var(--ink-soft);font-size:15px;margin-top:4px;">Twelve things worth knowing — read them now, or bluff your way through and learn them on the trail.</p>
+    <div class="facts" id="facts"></div>
+  </section>
+
+  <!-- ===================== QUIZ ===================== -->
+  <section id="screen-quiz" class="screen hidden">
+    <div class="card">
+      <div class="trailhead">
+        <div class="turn-chip" id="turnChip"><span class="dot"></span><span id="turnName">—</span> · to answer</div>
+        <span class="marker-label" id="markerLabel">Marker 1 / 12</span>
+      </div>
+      <div class="trail" id="trail"></div>
+
+      <div class="qcard">
+        <div class="q-index" id="qCategory">Field Test</div>
+        <h2 class="q-text" id="qText">—</h2>
+        <div class="options" id="options"></div>
+
+        <div class="fieldnote hidden" id="fieldnote">
+          <div class="fn-head">
+            <span class="verdict" id="verdict">—</span>
+          </div>
+          <div class="fn-label">Field note</div>
+          <p id="fnText">—</p>
+          <a class="more" id="fnLink" href="#" target="_blank" rel="noopener">Read more
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+          </a>
+        </div>
+
+        <div class="next-wrap hidden" id="nextWrap">
+          <button class="btn" id="nextBtn">Next marker →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RESULTS ===================== -->
+  <section id="screen-results" class="screen hidden">
+    <div class="hero" style="padding-bottom:0">
+      <p class="eyebrow">Trail complete · 12 markers</p>
+      <h1 style="font-size:clamp(32px,6vw,54px)" id="resultTitle">—</h1>
+    </div>
+    <div class="card mt">
+      <div class="score-strip">
+        <div class="score-card p1" id="sc1">
+          <div class="who" id="sc1name">Explorer One</div>
+          <div class="num" id="sc1num">0</div>
+          <div class="of">of 6</div>
+        </div>
+        <div class="vs">vs</div>
+        <div class="score-card p2" id="sc2">
+          <div class="who" id="sc2name">Explorer Two</div>
+          <div class="num" id="sc2num">0</div>
+          <div class="of">of 6</div>
+        </div>
+      </div>
+      <div class="rank-badge">
+        <p class="eyebrow">Combined ranger rank</p>
+        <h2 class="rank" id="rankName">—</h2>
+        <p class="verdict-line" id="rankLine">—</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="againBtn">Walk it again</button>
+        <button class="btn ghost" id="factsBtn">Back to the field notes</button>
+      </div>
+    </div>
+    <footer>
+      Built for a day out at <a href="https://hogeveluwe.nl/en" target="_blank" rel="noopener">De Hoge Veluwe National Park</a>.
+      <div class="disclaimer">Facts gathered from hogeveluwe.nl, krollermuller.nl &amp; nationaleparken.nl · verify opening hours &amp; prices before you go</div>
+    </footer>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- Data ---------------- */
+  var QUESTIONS = [
+    {
+      cat: "Lay of the land",
+      q: "Roughly how big is De Hoge Veluwe?",
+      options: ["About 540 hectares", "About 5,400 hectares", "About 54,000 hectares", "About 154,000 hectares"],
+      answer: 1,
+      note: "At around 5,400 hectares (~13,000 acres) it's one of the largest continuous nature reserves in the Netherlands — woodland, heath, grassland and drifting sand all in one fence line.",
+      link: "https://hogeveluwe.nl/en"
+    },
+    {
+      cat: "Get moving",
+      q: "The park's famous free-to-borrow bikes are what colour?",
+      options: ["Orange", "White", "Green", "Yellow"],
+      answer: 1,
+      note: "There are about 1,800 free White Bikes waiting at the entrances, the visitor centre and the museum. Grab one, ride the 40+ km of cycle paths, drop it wherever you finish.",
+      link: "https://www.hogeveluwe.nl/en/plan-your-trip/experience-the-park/cycling-and-white-bikes"
+    },
+    {
+      cat: "Founders",
+      q: "Who created the park in the early 20th century?",
+      options: ["The Dutch royal family", "A monastery of monks", "Anton & Helene Kröller-Müller", "The city of Arnhem"],
+      answer: 2,
+      note: "A wealthy married couple — Anton and Helene Kröller-Müller — bought up the land as a private hunting estate and cultural retreat. It became a national park in 1935. A fitting origin story for two people visiting together.",
+      link: "https://krollermuller.nl/en/de-hoge-veluwe-national-park"
+    },
+    {
+      cat: "Art in the trees",
+      q: "The Kröller-Müller Museum holds the world's second-largest collection by which artist?",
+      options: ["Rembrandt", "Vincent van Gogh", "Piet Mondrian", "Johannes Vermeer"],
+      answer: 1,
+      note: "Around 90 paintings and 180 drawings by Van Gogh — second only to Amsterdam's Van Gogh Museum. Helene was one of his earliest champions. 'Terrace of a Café at Night' lives here.",
+      link: "https://krollermuller.nl/en/van-gogh-collection"
+    },
+    {
+      cat: "The legend",
+      q: "The St. Hubertus hunting lodge honours a legend: what did the hunter see shining between a stag's antlers?",
+      options: ["A golden crown", "A silver cross", "A full moon", "A white rose"],
+      answer: 1,
+      note: "Legend says the hunter Hubertus was about to kill a great red stag when a glowing cross appeared in its antlers. He repented, became a bishop, and is now the patron saint of hunters. Look for that cross-in-antlers motif everywhere.",
+      link: "https://krollermuller.nl/en/timeline/saint-hubertus-hunting-lodge"
+    },
+    {
+      cat: "Architecture",
+      q: "Architect H.P. Berlage laid out the Sint Hubertus lodge's floor plan in the shape of what?",
+      options: ["A cross", "A pair of antlers", "A shotgun", "A five-pointed star"],
+      answer: 1,
+      note: "The whole lodge is a set of antlers seen from above, with the tower standing in for the shining cross. Berlage designed the building, its interiors and even the furniture — a total work of art (Gesamtkunstwerk).",
+      link: "https://nationaleparken.nl/en/parks/nationaal-park-de-hoge-veluwe/jachthuis-sint-hubertus-een-iconisch-buitenverblijf-met"
+    },
+    {
+      cat: "Wildlife",
+      q: "The male red deer's dramatic autumn 'bellowing' to attract mates — the rut — peaks in which months?",
+      options: ["March–April", "June–July", "September–October", "December–January"],
+      answer: 2,
+      note: "Rutting season is September–October, when stags roar to warn off rivals and draw the hinds. It's the park's most spectacular wildlife event — worth a return trip in autumn (you're a couple of months early today).",
+      link: "https://www.hogeveluwe.nl/en/plan-your-trip/experience-the-park/wildlife-and-bird-watching"
+    },
+    {
+      cat: "Wildlife",
+      q: "You want the best odds of spotting deer and boar. When should you be out?",
+      options: ["Midday, when it's warmest", "Early morning & late afternoon/evening", "Only after dark", "It makes no difference"],
+      answer: 1,
+      note: "Animals are most active at dawn and dusk. Head for the wildlife observation posts early or late, keep quiet, keep your distance, and don't feed anything. Binoculars earn their place in the bag.",
+      link: "https://www.hogeveluwe.nl/en/plan-your-trip/experience-the-park/wildlife-and-bird-watching"
+    },
+    {
+      cat: "Wildlife",
+      q: "Mouflon roam the park. A mouflon is a wild type of which animal?",
+      options: ["Goat", "Sheep", "Pig", "Pony"],
+      answer: 1,
+      note: "The mouflon is a wild sheep, originally from Corsica and Sardinia, introduced to the Veluwe long ago. Spot the curled horns on the males. It's often counted as the 'bonus' beast beyond the Big Five.",
+      link: "https://www.hogeveluwe.nl/en"
+    },
+    {
+      cat: "The Big Five",
+      q: "Which of these is NOT one of the Veluwe's classic 'Big Five'?",
+      options: ["Red deer", "Wild boar", "Fox", "Mouflon"],
+      answer: 3,
+      note: "The Big Five are the red deer, roe deer, wild boar, fox and the Scottish Highlander cattle. The mouflon, lovely as it is, is the honorary extra — the 'Big Six' member.",
+      link: "https://www.topparken.com/the-big-five-of-the-veluwe"
+    },
+    {
+      cat: "A comeback",
+      q: "Wild boar once vanished from the Veluwe. What happened next?",
+      options: ["They were replaced by pigs", "They returned and now live wild here", "They only exist in an enclosure", "They never came back"],
+      answer: 1,
+      note: "Hunted out of the region, wild boar have since returned to live wild across the Veluwe — a genuine conservation success. Try the road near Deelerveld for boar right beside the track.",
+      link: "https://www.topparken.com/the-big-five-of-the-veluwe"
+    },
+    {
+      cat: "Art in the trees",
+      q: "The museum's open-air sculpture garden (Beeldenpark) is among the largest of its kind in…",
+      options: ["The Netherlands only", "Europe", "The world", "the province of Gelderland"],
+      answer: 1,
+      note: "One of the largest sculpture gardens in Europe, with works by Barbara Hepworth, Jean Dubuffet, Marta Pan and more — art you walk through, set right in the woods. A perfect slow wander for two.",
+      link: "https://www.krollermuller.nl/en/sculpture-garden"
+    }
+  ];
+
+  var TIPS = [
+    { t: "Arrive at opening", d: "Gates open around 9:00. Early means quiet paths and the best wildlife — deer and boar fade as it warms up.", ico: "sun" },
+    { t: "Book ahead", d: "A day ticket runs roughly €13 per person (parking extra). Buy online before you drive so you're not queuing.", ico: "ticket" },
+    { t: "Grab a White Bike", d: "Free at every entrance and the museum. It's the whole point — 40+ km of car-free paths across the heath.", ico: "bike" },
+    { t: "Dress for wind", d: "The open heath is exposed and breezy. Layers plus a rain shell, even in July. Pack water and snacks.", ico: "wind" },
+    { t: "Two museums of a kind", d: "Kröller-Müller for Van Gogh & the sculpture garden; the Sint Hubertus lodge is a guided-tour gem — book that slot.", ico: "art" },
+    { t: "Picnic anywhere", d: "Tables are dotted throughout. Bring lunch and binoculars, park the bikes, and just watch the tree line.", ico: "leaf" }
+  ];
+
+  var PACK = [
+    "Refillable water bottle", "Layers + a light rain shell",
+    "Comfortable walking shoes", "Sunscreen & sunglasses",
+    "Binoculars for the deer", "A picnic & snacks",
+    "Charged phone + power bank", "Park tickets saved offline",
+    "Contactless card (OVpay)", "A small shared daypack"
+  ];
+
+  var ICONS = {
+    sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/></svg>',
+    ticket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 6 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-6Z"/><path d="M14 7v10" stroke-dasharray="1.5 2.5"/></svg>',
+    bike: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="3.2"/><circle cx="18" cy="17" r="3.2"/><path d="M6 17l4-8h5l3 8M9 9h5M14 9l-2 5"/></svg>',
+    wind: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10a2.5 2.5 0 1 0-2.5-2.5M3 16h13a2.5 2.5 0 1 1-2.5 2.5M3 12h7"/></svg>',
+    art: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1"/><circle cx="15" cy="9" r="1"/><circle cx="16" cy="14" r="1"/><path d="M12 21a3 3 0 0 1 0-6 2 2 0 0 0 0-4"/></svg>',
+    leaf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 6-13 14-13 0 8-5 14-13 14-1 0-1-1-1-1Z"/><path d="M9 15c2-2 4-3 7-4"/></svg>'
+  };
+
+  /* ---------------- State ---------------- */
+  var state = { p1: "You", p2: "Partner", idx: 0, s1: 0, s2: 0, answered: false };
+
+  /* ---------------- Helpers ---------------- */
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function show(id) {
+    ["screen-intro", "screen-quiz", "screen-results"].forEach(function (s) { $(s).classList.add("hidden"); });
+    var el = $(id); el.classList.remove("hidden");
+    el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  // player 1 gets even markers (0,2,4…), player 2 the odd ones
+  function currentPlayer() { return state.idx % 2 === 0 ? 1 : 2; }
+
+  /* ---------------- Render static bits ---------------- */
+  function renderTips() {
+    $("tips").innerHTML = TIPS.map(function (t) {
+      return '<div class="tip"><span class="ico">' + ICONS[t.ico] + '</span><div><b>' + esc(t.t) + '</b><p>' + esc(t.d) + '</p></div></div>';
+    }).join("");
+  }
+  function renderPack() {
+    var check = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg>';
+    $("pack").innerHTML = PACK.map(function (p, i) {
+      return '<div class="item" data-i="' + i + '" role="checkbox" aria-checked="false" tabindex="0">' +
+        '<span class="box">' + check + '</span><span class="lbl">' + esc(p) + '</span></div>';
+    }).join("");
+    Array.prototype.forEach.call($("pack").children, function (el) {
+      var toggle = function () {
+        var on = el.classList.toggle("checked");
+        el.setAttribute("aria-checked", on ? "true" : "false");
+      };
+      el.addEventListener("click", toggle);
+      el.addEventListener("keydown", function (e) {
+        if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); }
+      });
+    });
+  }
+
+  function renderFacts() {
+    $("facts").innerHTML = QUESTIONS.map(function (q, i) {
+      var n = (i + 1 < 10 ? "0" : "") + (i + 1);
+      return '<div class="fact"><div class="n">' + n + '</div><h3>' + esc(q.cat) + '</h3><p>' + esc(q.note) + '</p>' +
+        '<a href="' + q.link + '" target="_blank" rel="noopener">Source ↗</a></div>';
+    }).join("");
+  }
+
+  /* ---------------- Trail ---------------- */
+  function renderTrail() {
+    var html = "";
+    for (var i = 0; i < QUESTIONS.length; i++) {
+      var cls = i < state.idx ? "done" : (i === state.idx ? "now" : "");
+      html += '<span class="step ' + cls + '"></span>';
+    }
+    $("trail").innerHTML = html;
+  }
+
+  /* ---------------- Question flow ---------------- */
+  function loadQuestion() {
+    state.answered = false;
+    var q = QUESTIONS[state.idx];
+    var p = currentPlayer();
+    var name = p === 1 ? state.p1 : state.p2;
+
+    var chip = $("turnChip");
+    chip.className = "turn-chip " + (p === 1 ? "p1" : "p2");
+    $("turnName").textContent = name;
+    $("markerLabel").textContent = "Marker " + (state.idx + 1) + " / " + QUESTIONS.length;
+
+    $("qCategory").textContent = q.cat;
+    $("qText").textContent = q.q;
+
+    var keys = ["A", "B", "C", "D"];
+    $("options").innerHTML = q.options.map(function (opt, i) {
+      return '<button class="opt" data-i="' + i + '"><span class="key">' + keys[i] + '</span><span>' + esc(opt) + '</span></button>';
+    }).join("");
+    Array.prototype.forEach.call($("options").children, function (b) {
+      b.addEventListener("click", function () { choose(parseInt(b.getAttribute("data-i"), 10)); });
+    });
+
+    $("fieldnote").classList.add("hidden");
+    $("nextWrap").classList.add("hidden");
+    renderTrail();
+  }
+
+  function choose(i) {
+    if (state.answered) return;
+    state.answered = true;
+    var q = QUESTIONS[state.idx];
+    var correct = i === q.answer;
+    if (correct) { currentPlayer() === 1 ? state.s1++ : state.s2++; }
+
+    var opts = $("options").children;
+    Array.prototype.forEach.call(opts, function (b) {
+      var bi = parseInt(b.getAttribute("data-i"), 10);
+      b.disabled = true;
+      if (bi === q.answer) b.classList.add("correct");
+      else if (bi === i) b.classList.add("wrong");
+      else b.classList.add("dim");
+    });
+
+    var v = $("verdict");
+    v.textContent = correct ? "✓ Spotted it" : "✗ It got away";
+    v.className = "verdict " + (correct ? "ok" : "no");
+    $("fnText").textContent = q.note;
+    $("fnLink").href = q.link;
+    $("fieldnote").classList.remove("hidden");
+
+    $("nextBtn").textContent = state.idx === QUESTIONS.length - 1 ? "See the results →" : "Next marker →";
+    $("nextWrap").classList.remove("hidden");
+  }
+
+  function next() {
+    if (state.idx >= QUESTIONS.length - 1) { showResults(); return; }
+    state.idx++;
+    loadQuestion();
+  }
+
+  /* ---------------- Results ---------------- */
+  function showResults() {
+    $("sc1name").textContent = state.p1;
+    $("sc2name").textContent = state.p2;
+    $("sc1num").textContent = state.s1;
+    $("sc2num").textContent = state.s2;
+
+    $("sc1").classList.toggle("win", state.s1 > state.s2);
+    $("sc2").classList.toggle("win", state.s2 > state.s1);
+
+    var title, line;
+    if (state.s1 === state.s2) {
+      title = "A dead heat";
+      line = "Perfectly matched — you two should just get the White Bikes and go.";
+    } else {
+      var winner = state.s1 > state.s2 ? state.p1 : state.p2;
+      title = winner + " leads the way";
+      line = winner + " reads the map today. Loser buys the coffee at the visitor centre.";
+    }
+    $("resultTitle").textContent = title;
+
+    var total = state.s1 + state.s2;
+    var rank, rline;
+    if (total >= 11) { rank = "Head Ranger"; rline = "Between you, almost nothing about the Veluwe escaped you. Go find the deer — you've earned it."; }
+    else if (total >= 8) { rank = "Seasoned Trackers"; rline = "Strong knowledge of the park. You'll spot the mouflon before anyone else does."; }
+    else if (total >= 5) { rank = "Day Wanderers"; rline = "A fine grasp of the essentials — the rest you'll pick up on the trail today."; }
+    else { rank = "First-Timers"; rline = "Plenty left to discover — which is the best possible reason to be going today."; }
+    $("rankName").textContent = rank;
+    $("rankLine").textContent = rline;
+
+    show("screen-results");
+  }
+
+  /* ---------------- Start / reset ---------------- */
+  function start() {
+    var n1 = $("p1name").value.trim();
+    var n2 = $("p2name").value.trim();
+    state.p1 = n1 || "Explorer One";
+    state.p2 = n2 || "Explorer Two";
+    state.idx = 0; state.s1 = 0; state.s2 = 0;
+    show("screen-quiz");
+    loadQuestion();
+  }
+
+  /* ---------------- Theme ---------------- */
+  function initTheme() {
+    $("themeBtn").addEventListener("click", function () {
+      var root = document.documentElement;
+      var cur = root.getAttribute("data-theme");
+      if (!cur) {
+        cur = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      root.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+    });
+  }
+
+  /* ---------------- Wire up ---------------- */
+  renderTips();
+  renderPack();
+  renderFacts();
+  initTheme();
+  $("startBtn").addEventListener("click", start);
+  $("nextBtn").addEventListener("click", next);
+  $("againBtn").addEventListener("click", function () { show("screen-intro"); });
+  $("factsBtn").addEventListener("click", function () { show("screen-intro"); });
+  $("p2name").addEventListener("keydown", function (e) { if (e.key === "Enter") start(); });
+
+})();
+</script>
+</body>
+</html>
